@@ -21,6 +21,7 @@ int main() {
 		printf("%x", hash[i]);
 		if((i+1) % 4 == 0) printf(" ");
 	}
+	free(hash);
 	printf("\n");
 	return 0;
 }
