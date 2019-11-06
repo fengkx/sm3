@@ -6,4 +6,4 @@ main: sm3
 sm3:
 	cc -c -g3 -gdwarf-2 sm3.c
 clean:
-	rm -f sm3
+	rm -f sm3 *.o
