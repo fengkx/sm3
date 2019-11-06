@@ -95,16 +95,12 @@ padding(const byte *src, size_t src_len, size_t *out_len) {
 }
 
 
-word P0(word w) {
-	word db0 = ls_w(w, 9);
-	word db1 = ls_w(w, 17);
+static inline word P0(word w) {
 	w = (w) ^ ls_w(w, 9) ^ ls_w(w, 17);
 	return w;
 }
 
-word P1(word w) {
-	word db0 = ls_w(w, 15);
-	word db1 = ls_w(w, 23);
+static inline word P1(word w) {
 	w = (w) ^ ls_w(w, 15) ^ ls_w(w, 23);
 	return w;
 }
