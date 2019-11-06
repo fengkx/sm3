@@ -10,8 +10,8 @@ int endianTest = 0x12345678;
 #define rs_w(a, n) (a << (32 - n) | a >> n)
 
 
-int main() {
-	char *s = "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd";
+byte *
+sm3(const char * const s) {
 	size_t len;
 	byte *padding_s = padding((byte *)s, strlen(s), &len);
 	word *W_p, *W;
@@ -34,7 +34,7 @@ int main() {
 		}
 	}
 	free(iv);
-	free(final_result);
+	return (char *)final_result;
 }
 
 

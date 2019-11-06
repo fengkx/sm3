@@ -3,3 +3,6 @@
 
 #excutable
 sm3
+
+# obj file
+*.o

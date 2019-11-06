@@ -16,4 +16,6 @@ void iv_init(word * const ivs);
 
 void CF(word * const iv, byte* blk, const word * const W, const word * const W_p);
 
+byte *sm3(const char * const s);
+
 #endif
