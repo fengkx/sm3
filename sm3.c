@@ -22,7 +22,7 @@ sm3(FILE *fp) {
 	// size_t len;
 	// byte *padding_s = padding((byte *)s, strlen(s), &len);
 	word *W_p, *W;
-	word *iv = malloc(sizeof(word) * 8);
+	word *iv = malloc(sizeof(word) << 3);
 	iv_init(iv);
 
 	int n=0;
@@ -54,7 +54,7 @@ sm3(FILE *fp) {
 	free(padding_s);
 	free(W);
 	free(W_p);
-	word *final_result = malloc(sizeof(word) * 8);
+	word *final_result = malloc(sizeof(word) << 3);
 	for (int i=0;i<8;i++) {
 		memcpy(&final_result[i], &iv[i], sizeof(word));
 		if(isLittleEndian) {
@@ -100,8 +100,8 @@ void reverse_by_byte(byte * const le, size_t len) {
  */
 byte *
 padding(const byte *src, size_t src_len, size_t content_len, size_t *out_len) {
-	size_t src_bit_len = sizeof(byte) * src_len * 8;
-	size_t content_bit_len = sizeof(byte) * content_len * 8;
+	size_t src_bit_len = sizeof(byte) * src_len << 3;
+	size_t content_bit_len = sizeof(byte) * content_len << 3;
 	size_t k_bit_len = (448 - ((src_bit_len % 512) + 1)  + 512) % 512 ;
 	int output_len = (src_bit_len + 1 + 64 + k_bit_len) >> 3;
 	byte *result = malloc(sizeof(byte) * output_len);
@@ -114,7 +114,7 @@ padding(const byte *src, size_t src_len, size_t content_len, size_t *out_len) {
 	result[src_len] |= one;
 
 	// set src_len bigendian to last 8 byte
-	byte *big_content_bit_len = malloc(sizeof(byte) * 8);
+	byte *big_content_bit_len = malloc(sizeof(byte) << 3);
 	memcpy(big_content_bit_len, &content_bit_len, 8);
 	reverse_by_byte(big_content_bit_len, 8);
 	memcpy(&result[output_len-8], big_content_bit_len, 8);
@@ -136,10 +136,10 @@ static inline word P1(word w) {
 
 
 // return big endian W and W'
-word *expand_blk(const char *blks, word **W_p) {
+static inline word *expand_blk(const char *blks, word **W_p) {
 	word *W_result = malloc(68 * sizeof(word));
-	word *W_p_result = malloc(64 * sizeof(word));
-	memcpy(W_result, blks, sizeof(byte) * 64); // copy blks to W
+	word *W_p_result = malloc(sizeof(word) << 6);
+	memcpy(W_result, blks, sizeof(byte) << 6); // copy blks to W
 	
 	if(isLittleEndian) {
 		for (int i=0;i<68;i++) {
@@ -181,7 +181,7 @@ static inline word GG(int j, word x, word y, word z) {
 	return  w;
 }
 
-void CF(word * const iv, byte* blk, const word * const W, const word * const W_p) {
+static inline void CF(word * const iv, byte* blk, const word * const W, const word * const W_p) {
 	word A = iv[0];
 	word B = iv[1];
 	word C = iv[2];
