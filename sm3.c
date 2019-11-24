@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "sm3.h"
 
-int endianTest = 0x12345678;
+static const int endianTest = 0x12345678;
 #define isLittleEndian ((* (char *)&endianTest) ==  0x78)
 
 #define ls_w(a, n) (a >> (32 - n) | a << n)
@@ -11,16 +11,44 @@ int endianTest = 0x12345678;
 
 
 byte *
-sm3(const char * const s) {
-	size_t len;
-	byte *padding_s = padding((byte *)s, strlen(s), &len);
+sm3(FILE *fp) {
+	long sz, nread=0, nremain;
+	byte buf[64];
+	fseek(fp, 0, SEEK_END);
+	sz = ftell(fp);
+	rewind(fp);
+	nremain = sz;
+
+	// size_t len;
+	// byte *padding_s = padding((byte *)s, strlen(s), &len);
 	word *W_p, *W;
 	word *iv = malloc(sizeof(word) * 8);
 	iv_init(iv);
-	for (int i=0;i<len>>6;i++) {
-		W = expand_blk(&padding_s[i*64], &W_p);
-		CF(iv, &padding_s[i*64], W, W_p);
+
+	int n=0;
+	while(nremain>=64) {
+		n = fread(buf, 1, 64, fp);
+		nremain-=n;
+		nread+=n;
+		W = expand_blk(buf, &W_p);
+		CF(iv, buf, W, W_p);
 	}
+
+	// if(nremain >0) {
+		n = fread(buf, 1, 64, fp);
+		nremain -= n;
+		nread += n;
+		
+	// }
+	size_t len;
+	byte *padding_s = padding(buf, n, nread, &len);
+	W = expand_blk(padding_s, &W_p);
+	CF(iv, padding_s, W, W_p);
+
+	// for (int i=0;i<len>>6;i++) {
+	// 	W = expand_blk(&padding_s[i*64], &W_p);
+	// 	CF(iv, &padding_s[i*64], W, W_p);
+	// }
 
 	// time to free some memory
 	free(padding_s);
@@ -71,8 +99,9 @@ void reverse_by_byte(byte * const le, size_t len) {
  *
  */
 byte *
-padding(const byte *src, size_t src_len, size_t *out_len) {
+padding(const byte *src, size_t src_len, size_t content_len, size_t *out_len) {
 	size_t src_bit_len = sizeof(byte) * src_len * 8;
+	size_t content_bit_len = sizeof(byte) * content_len * 8;
 	size_t k_bit_len = (448 - ((src_bit_len % 512) + 1)  + 512) % 512 ;
 	int output_len = (src_bit_len + 1 + 64 + k_bit_len) >> 3;
 	byte *result = malloc(sizeof(byte) * output_len);
@@ -85,11 +114,11 @@ padding(const byte *src, size_t src_len, size_t *out_len) {
 	result[src_len] |= one;
 
 	// set src_len bigendian to last 8 byte
-	byte *big_src_bit_len = malloc(sizeof(byte) * 8);
-	memcpy(big_src_bit_len, &src_bit_len, 8);
-	reverse_by_byte(big_src_bit_len, 8);
-	memcpy(&result[output_len-8], big_src_bit_len, 8);
-	free(big_src_bit_len);
+	byte *big_content_bit_len = malloc(sizeof(byte) * 8);
+	memcpy(big_content_bit_len, &content_bit_len, 8);
+	reverse_by_byte(big_content_bit_len, 8);
+	memcpy(&result[output_len-8], big_content_bit_len, 8);
+	free(big_content_bit_len);
 	if(out_len != NULL) *out_len = output_len;
 	return result;
 }
@@ -149,9 +178,6 @@ static inline word GG(int j, word x, word y, word z) {
 	word w;
 	if(j>=0 && j<=15) w = x ^ y ^ z;
 	else if(j>=16 && j<=63) w = (x & y) | ( (~x) & z);
-//	if(isLittleEndian) {
-//		reverse_by_byte((byte *)&w, 4);
-//	}
 	return  w;
 }
 

@@ -9,13 +9,13 @@
 static char buf[MAXBUF];
 
 int main() {
-	char *s = fgets(buf, MAXBUF, stdin);
-	if(!s) {
-		fprintf(stderr, "input empty");
-		exit(1);
-	}
-	s[strlen(s) - 1] = '\0'; // remove the \n
-	byte *hash = sm3(s);
+	// char *s = fgets(buf, MAXBUF, stdin);
+	// if(!s) {
+	// 	fprintf(stderr, "input empty");
+	// 	exit(1);
+	// }
+	// s[strlen(s) - 1] = '\0'; // remove the \n
+	byte *hash = sm3(stdin);
 	printf("sm3 hash: \n");
 	for (int i=0;i<SM3_SIZE;i++) {
 		printf("%x", hash[i]);
